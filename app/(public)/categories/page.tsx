@@ -18,7 +18,6 @@ export default function CategoriesPage() {
                         name={cat.name}
                         slug={cat.slug}
                         iconName={cat.icon}
-                        count={cat.count}
                     />
                 ))}
             </div>
