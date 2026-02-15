@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Check, Ban, Upload, Image as ImageIcon, Trash2, X, Plus, Settings, CreditCard, BarChart3, TrendingUp, ShoppingBag, Activity } from 'lucide-react'
+import { Check, Ban, Upload, Image as ImageIcon, Trash2, X, Plus, Settings, CreditCard, BarChart3, TrendingUp, ShoppingBag, Activity, Users } from 'lucide-react'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
 import { AdminSidebar } from './admin-sidebar'
