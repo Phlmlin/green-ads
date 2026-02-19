@@ -67,10 +67,12 @@ export default function AdDetailPage({ params }: AdDetailProps) {
                 }
 
                 // Increment view count (fire and forget)
-                supabase.rpc('increment_ad_view', { ad_id: id }).catch(() => {
-                    // Fallback if RPC doesn't exist yet, try direct update
-                    // But direct update might be restricted by RLS if not owner.
-                    // We'll skip for now or implement RPC later.
+                void supabase.rpc('increment_ad_view', { ad_id: id }).then(({ error }) => {
+                    if (error) {
+                        // Fallback if RPC doesn't exist yet, try direct update
+                        // But direct update might be restricted by RLS if not owner.
+                        // We'll skip for now or implement RPC later.
+                    }
                 })
 
             } catch (err: any) {
