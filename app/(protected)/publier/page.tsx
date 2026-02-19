@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { CATEGORIES, PLANS, PROVINCES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { ImageUploader } from '@/components/ui/image-uploader'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Check, ChevronRight, CheckCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
@@ -12,9 +12,12 @@ import { createClient } from '@/utils/supabase/client'
 export default function PublishPage() {
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
+    const [fetchingAd, setFetchingAd] = useState(false)
     const [user, setUser] = useState<any>(null)
     const supabase = createClient()
     const router = useRouter()
+    const searchParams = useSearchParams()
+    const editAdId = searchParams.get('edit')
 
     // Form State
     const [formData, setFormData] = useState({
@@ -41,25 +44,30 @@ export default function PublishPage() {
         contractType: '', // CDI, CDD...
         company: '',
         salary: '',
-        images: [] as File[],
+        images: [] as (File | string)[],
         plan: 'gratuit'
     })
 
     const [cities, setCities] = useState<string[]>([])
-
     const [dbCategories, setDbCategories] = useState<any[]>([])
 
+    // Initial Data Load (User & Categories)
     useEffect(() => {
         const initData = async () => {
             // 1. Get User
             const { data: { user } } = await supabase.auth.getUser()
             if (user) {
                 setUser(user)
-                setFormData(prev => ({
-                    ...prev,
-                    email: user.email || '',
-                    phone: user.user_metadata?.phone || ''
-                }))
+                if (!editAdId) {
+                    setFormData(prev => ({
+                        ...prev,
+                        email: user.email || '',
+                        phone: user.user_metadata?.phone || ''
+                    }))
+                }
+            } else {
+                router.push('/connexion')
+                return
             }
 
             // 2. Fetch Categories
@@ -69,14 +77,81 @@ export default function PublishPage() {
 
             if (cats) {
                 setDbCategories(cats)
-            } else {
-                console.error("Error fetching categories:", error)
-                // Fallback or alert? For now, we rely on the constants if DB fails, but constants don't have IDs.
-                // Critical failure if we can't get IDs.
             }
         }
         initData()
-    }, [])
+    }, [editAdId, router, supabase])
+
+    // Fetch Ad Data for Editing
+    useEffect(() => {
+        const fetchAdForEdit = async () => {
+            if (!editAdId || dbCategories.length === 0) return
+
+            setFetchingAd(true)
+            const { data: ad, error } = await supabase
+                .from('ads')
+                .select('*')
+                .eq('id', editAdId)
+                .single()
+
+            if (error || !ad) {
+                console.error("Error fetching ad:", error)
+                alert("Impossible de charger l'annonce.")
+                router.push('/tableau-de-bord')
+                return
+            }
+
+            // Match Category ID to Name
+            const cat = dbCategories.find(c => c.id === ad.category_id)
+            const catName = cat ? cat.name : ''
+
+            // Parse location "Province, City"
+            const [prov, city] = (ad.location || '').split(',').map((s: string) => s.trim())
+
+            // Set Form Data
+            setFormData({
+                category: catName,
+                title: ad.title,
+                description: ad.description,
+                price: ad.price.toString(),
+                currency: ad.currency || 'F CFA',
+                province: prov || '',
+                city: city || '',
+                phone: user?.user_metadata?.phone || '', // Keep user phone or fetch from profile if stored elsewhere
+                email: user?.email || '',
+
+                // Custom Data
+                brand: ad.custom_data?.brand || '',
+                model: ad.custom_data?.model || '',
+                year: ad.custom_data?.year || '',
+                mileage: ad.custom_data?.mileage || '',
+                fuel: ad.custom_data?.fuel || '',
+                transmission: ad.custom_data?.transmission || '',
+                propertyType: ad.custom_data?.propertyType || '',
+                surface: ad.custom_data?.surface || '',
+                rooms: ad.custom_data?.rooms || '',
+                bathrooms: ad.custom_data?.bathrooms || '',
+                contractType: ad.custom_data?.contractType || '',
+                company: ad.custom_data?.company || '',
+                salary: ad.custom_data?.salary || '',
+
+                images: ad.images || [],
+                plan: ad.plan || 'gratuit'
+            })
+
+            // Set cities for the province
+            if (prov && PROVINCES[prov]) {
+                setCities(PROVINCES[prov])
+            }
+
+            setFetchingAd(false)
+        }
+
+        if (editAdId && user && dbCategories.length > 0) {
+            fetchAdForEdit()
+        }
+    }, [editAdId, user, dbCategories, router, supabase])
+
 
     const updateField = (field: string, value: any) => {
         setFormData(prev => {
@@ -108,21 +183,24 @@ export default function PublishPage() {
 
         setLoading(true)
         try {
-            // Find Category ID
-            // Match by name or slug. The form uses name currently.
-            // Ideally we should use slug everywhere but let's match name for now since that's what is in state.
-            // Or better, match slug if possible. CATEGORIES constant has name and slug.
-            // formData.category stores the NAME (e.g. "Véhicules")
-
             const selectedCat = dbCategories.find(c => c.name === formData.category)
             if (!selectedCat) {
                 throw new Error(`Catégorie invalide ou introuvable: ${formData.category}`)
             }
 
-            // Upload images
-            const imageUrls = []
-            if (formData.images.length > 0) {
-                for (const file of formData.images) {
+            // Upload new images
+            const finalImageUrls: string[] = []
+
+            // Separate existing URLs from new Files
+            const existingUrls = formData.images.filter(img => typeof img === 'string') as string[]
+            const newFiles = formData.images.filter(img => typeof img !== 'string') as File[]
+
+            // Add existing
+            finalImageUrls.push(...existingUrls)
+
+            // Upload new
+            if (newFiles.length > 0) {
+                for (const file of newFiles) {
                     const fileExt = file.name.split('.').pop()
                     const fileName = `${Math.random()}.${fileExt}`
                     const { error: uploadError } = await supabase.storage
@@ -133,7 +211,7 @@ export default function PublishPage() {
                     const { data: { publicUrl } } = supabase.storage
                         .from('ads')
                         .getPublicUrl(`${user.id}/${fileName}`)
-                    imageUrls.push(publicUrl)
+                    finalImageUrls.push(publicUrl)
                 }
             }
 
@@ -163,29 +241,49 @@ export default function PublishPage() {
                 }
             }
 
-            // Insert into DB
-            const { error } = await supabase.from('ads').insert({
-                user_id: user.id,
-                category_id: selectedCat.id, // Use the real UUID
+            const adPayload = {
+                category_id: selectedCat.id,
                 title: formData.title,
                 description: formData.description,
                 price: parseFloat(formData.price) || 0,
                 location: `${formData.province}, ${formData.city}`,
                 custom_data: customData,
-                images: imageUrls,
+                images: finalImageUrls,
                 plan: formData.plan,
-                status: 'pending' // As per schema default
-            })
+                // Do not reset status to pending on edit if approved?
+                // Usually editing requires re-approval. Let's set to pending if user is not admin.
+                status: 'pending'
+            }
+
+            let error;
+            if (editAdId) {
+                // Update
+                const { error: updateError } = await supabase
+                    .from('ads')
+                    .update(adPayload)
+                    .eq('id', editAdId)
+                    .eq('user_id', user.id) // Security check
+                error = updateError
+            } else {
+                // Insert
+                const { error: insertError } = await supabase
+                    .from('ads')
+                    .insert({
+                        user_id: user.id,
+                        ...adPayload
+                    })
+                error = insertError
+            }
 
             if (error) {
-                console.error("Supabase Insert Error:", error)
+                console.error("Supabase Error:", error)
                 throw error
             }
 
             router.push('/tableau-de-bord?success=true')
         } catch (error: any) {
             console.error('Error publishing ad:', error)
-            alert(`Erreur lors de la publication: ${error.message || "Une erreur est survenue"}`)
+            alert(`Erreur: ${error.message || "Une erreur est survenue"}`)
         } finally {
             setLoading(false)
         }
@@ -361,9 +459,19 @@ export default function PublishPage() {
         </div>
     )
 
+    if (fetchingAd) {
+        return (
+            <div className="flex justify-center items-center h-[50vh]">
+                <Loader2 className="w-8 h-8 animate-spin text-green-600" />
+            </div>
+        )
+    }
+
     return (
         <div className="max-w-3xl mx-auto pb-12">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Publier une annonce</h1>
+            <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+                {editAdId ? "Modifier l'annonce" : "Publier une annonce"}
+            </h1>
 
             {/* Progress Steps */}
             <div className="flex justify-between items-center mb-12 relative px-4">
@@ -472,9 +580,11 @@ export default function PublishPage() {
                 {step === 4 && (
                     <div className="text-center">
                         <CheckCircle size={64} className="mx-auto text-green-600 mb-4" />
-                        <h2 className="text-2xl font-bold text-gray-900 mb-2">Confirmez-vous la publication ?</h2>
+                        <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                            {editAdId ? "Confirmez-vous la modification ?" : "Confirmez-vous la publication ?"}
+                        </h2>
                         <p className="text-gray-600 mb-8 max-w-md mx-auto">
-                            Votre annonce "{formData.title}" sera publiée dans la catégorie {formData.category} à {formData.city}.
+                            Votre annonce "{formData.title}" sera {editAdId ? 'mise à jour' : 'publiée'} dans la catégorie {formData.category} à {formData.city}.
                         </p>
                     </div>
                 )}
@@ -491,7 +601,7 @@ export default function PublishPage() {
                             </Button>
                         ) : (
                             <Button onClick={handleSubmit} className="bg-green-600 hover:bg-green-700" disabled={loading}>
-                                {loading ? <><Loader2 className="animate-spin mr-2" /> Publication...</> : 'Confirmer la publication'}
+                                {loading ? <><Loader2 className="animate-spin mr-2" /> {editAdId ? 'Modification...' : 'Publication...'}</> : (editAdId ? 'Confirmer la modification' : 'Confirmer la publication')}
                             </Button>
                         )}
                     </div>

@@ -124,13 +124,35 @@ create policy "Admins can view and update subscriptions." on public.subscription
   exists (select 1 from public.users where id = auth.uid() and role = 'admin')
 );
 
+-- CONVERSATIONS TABLE
+create table public.conversations (
+  id uuid default uuid_generate_v4() primary key,
+  participant1_id uuid references public.users(id) not null,
+  participant2_id uuid references public.users(id) not null,
+  ad_id uuid references public.ads(id) not null,
+  last_message text,
+  last_message_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(participant1_id, participant2_id, ad_id)
+);
+
+alter table public.conversations enable row level security;
+create policy "Users can view their conversations." on public.conversations
+  for select using (auth.uid() = participant1_id or auth.uid() = participant2_id);
+
+create policy "Users can insert conversations." on public.conversations
+  for insert with check (auth.uid() = participant1_id or auth.uid() = participant2_id);
+
+create policy "Users can update their conversations." on public.conversations
+  for update using (auth.uid() = participant1_id or auth.uid() = participant2_id);
+
 -- MESSAGES TABLE
 create table public.messages (
   id uuid default uuid_generate_v4() primary key,
-  conversation_id uuid not null, -- Grouping ID
+  conversation_id uuid references public.conversations(id) on delete cascade not null,
   sender_id uuid references public.users(id) not null,
   receiver_id uuid references public.users(id) not null,
-  ad_id uuid references public.ads(id),
+  ad_id uuid references public.ads(id), -- Optional now as it's in conversation, but kept for legacy/direct reference
   content text not null,
   is_read boolean default false,
   created_at timestamp with time zone default timezone('utc'::text, now()) not null

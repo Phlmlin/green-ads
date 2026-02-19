@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Plus, Settings, LogOut, Package, MessageSquare, CreditCard, Loader2, CheckCircle, X, Heart, Clock, Eye } from 'lucide-react'
+import { Plus, Settings, LogOut, Package, MessageSquare, CreditCard, Loader2, CheckCircle, X, Heart, Clock, Eye, Trash2, Edit } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/utils/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -33,12 +33,26 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })
-            .limit(5)
+            // Removed limit(5) to show all ads in dashboard or add pagination later
+            // For now let's show more than 5 if user manages them
+            .limit(20)
 
         if (data) {
             setUserAds(data)
         }
         setLoadingAds(false)
+    }
+
+    const handleDeleteAd = async (adId: string) => {
+        if (!confirm("Êtes-vous sûr de vouloir supprimer cette annonce ? Cette action est irréversible.")) return
+
+        const { error } = await supabase.from('ads').delete().eq('id', adId)
+        if (error) {
+            console.error("Error deleting ad:", error)
+            alert("Une erreur est survenue lors de la suppression.")
+        } else {
+            setUserAds(userAds.filter(ad => ad.id !== adId))
+        }
     }
 
     const handleLogout = async () => {
@@ -56,9 +70,9 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
 
     const stats = {
         activeAds: userAds.filter(ad => ad.status === 'approved').length,
-        expiredAds: userAds.filter(ad => ad.status === 'expired' || ad.status === 'rejected').length, // Approximating expired for now
-        messages: 0, // Placeholder
-        views: userAds.reduce((acc, curr) => acc + (curr.views || 0), 0)
+        expiredAds: userAds.filter(ad => ad.status === 'expired' || ad.status === 'rejected').length,
+        messages: 0, // Placeholder - would need to count unread messages
+        views: userAds.reduce((acc, curr) => acc + (curr.views_count || 0), 0)
     }
 
     return (
@@ -86,14 +100,11 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                             <Package size={18} />
                             Mes annonces
                         </button>
-                        <button
-                            onClick={() => setActiveTab('messages')}
-                            className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${activeTab === 'messages' ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50'
-                                }`}
-                        >
+                        <Link href="/messages" className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${activeTab === 'messages' ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50'
+                            }`}>
                             <MessageSquare size={18} />
                             Messages
-                        </button>
+                        </Link>
                         <button
                             onClick={() => setActiveTab('favorites')}
                             className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-md transition-colors ${activeTab === 'favorites' ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50'
@@ -156,7 +167,7 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                         <p className="text-3xl font-bold text-gray-900">{stats.expiredAds}</p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-                        <p className="text-gray-500 text-sm mb-1">Messages reçus</p>
+                        <p className="text-gray-500 text-sm mb-1">Messages</p>
                         <p className="text-3xl font-bold text-amber-500">{stats.messages}</p>
                     </div>
                     <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
@@ -182,7 +193,7 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                 {typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('success') === 'true' && (
                     <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
                         <CheckCircle size={20} />
-                        <p>Votre annonce a été publiée avec succès ! Elle est en cours de validation.</p>
+                        <p>Opération effectuée avec succès !</p>
                         <button
                             onClick={() => router.replace('/tableau-de-bord')}
                             className="ml-auto text-green-600 hover:text-green-800"
@@ -192,11 +203,11 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                     </div>
                 )}
 
-                {/* Mes dernières annonces */}
+                {/* Mes annonces */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
                     <div className="p-6 border-b border-gray-100 flex justify-between items-center">
-                        <h2 className="text-lg font-bold text-gray-900">Mes dernières annonces</h2>
-                        <Button variant="ghost" size="sm" onClick={() => setActiveTab('ads')}>Voir tout</Button>
+                        <h2 className="text-lg font-bold text-gray-900">Mes annonces</h2>
+                        {/* <Button variant="ghost" size="sm" onClick={() => setActiveTab('ads')}>Voir tout</Button> */}
                     </div>
 
                     {loadingAds ? (
@@ -206,8 +217,8 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                     ) : userAds.length > 0 ? (
                         <div className="divide-y divide-gray-100">
                             {userAds.map((ad) => (
-                                <div key={ad.id} className="p-4 flex items-center gap-4 hover:bg-gray-50 transition-colors">
-                                    <div className="w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 relative">
+                                <div key={ad.id} className="p-4 flex flex-col md:flex-row md:items-center gap-4 hover:bg-gray-50 transition-colors">
+                                    <div className="w-full md:w-20 h-20 bg-gray-100 rounded-md overflow-hidden flex-shrink-0 relative">
                                         {ad.images && ad.images[0] ? (
                                             <Image
                                                 src={ad.images[0]}
@@ -222,7 +233,9 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                                         )}
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="font-semibold text-gray-900">{ad.title}</h3>
+                                        <Link href={`/annonce/${ad.id}`} className="font-semibold text-gray-900 hover:text-green-600 line-clamp-1">
+                                            {ad.title}
+                                        </Link>
                                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                                             <span className="flex items-center gap-1">
                                                 <Clock size={12} />
@@ -230,18 +243,33 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                                             </span>
                                             <span className="flex items-center gap-1">
                                                 <Eye size={12} />
-                                                {ad.views || 0} vues
+                                                {ad.views_count || 0} vues
                                             </span>
                                         </div>
-                                    </div>
-                                    <div>
-                                        <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${ad.status === 'approved' ? 'bg-green-100 text-green-700' :
+                                        <div className="mt-2">
+                                             <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${ad.status === 'approved' ? 'bg-green-100 text-green-700' :
                                                 ad.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                                     'bg-yellow-100 text-yellow-700'
                                             }`}>
                                             {ad.status === 'approved' ? 'Active' :
                                                 ad.status === 'rejected' ? 'Refusée' : 'En attente'}
                                         </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-2 mt-2 md:mt-0 self-end md:self-center">
+                                        <Link href={`/publier?edit=${ad.id}`}>
+                                            <Button size="sm" variant="outline" className="h-8 gap-1 text-gray-600">
+                                                <Edit size={14} /> Modifier
+                                            </Button>
+                                        </Link>
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="h-8 gap-1 text-red-600 border-red-100 hover:bg-red-50 hover:text-red-700 hover:border-red-200"
+                                            onClick={() => handleDeleteAd(ad.id)}
+                                        >
+                                            <Trash2 size={14} /> Supprimer
+                                        </Button>
                                     </div>
                                 </div>
                             ))}
@@ -249,7 +277,7 @@ export function UserDashboard({ user, initialActiveTab = 'ads' }: UserDashboardP
                     ) : (
                         <div className="p-8 text-center">
                             <Package size={48} className="mx-auto text-gray-300 mb-4" />
-                            <h3 className="text-lg font-medium text-gray-900 mb-1">Aucune annonce récente</h3>
+                            <h3 className="text-lg font-medium text-gray-900 mb-1">Aucune annonce</h3>
                             <p className="text-gray-500 mb-6">Vous n'avez pas encore publié d'annonce.</p>
                             <Link href="/publier">
                                 <Button variant="outline" className="border-green-600 text-green-600 hover:bg-green-50">

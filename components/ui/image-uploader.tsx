@@ -6,8 +6,8 @@ import Image from 'next/image'
 import { cn } from '@/lib/utils'
 
 interface ImageUploaderProps {
-    images: File[]
-    onChange: (files: File[]) => void
+    images: (File | string)[]
+    onChange: (files: (File | string)[]) => void
     maxFiles?: number
 }
 
@@ -61,6 +61,11 @@ export function ImageUploader({ images, onChange, maxFiles = 5 }: ImageUploaderP
         onChange(newImages)
     }
 
+    const getPreviewUrl = (file: File | string) => {
+        if (typeof file === 'string') return file
+        return URL.createObjectURL(file)
+    }
+
     return (
         <div className="space-y-4">
             <div
@@ -68,7 +73,7 @@ export function ImageUploader({ images, onChange, maxFiles = 5 }: ImageUploaderP
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 className={cn(
-                    "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer",
+                    "border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer relative",
                     isDragging ? "border-green-500 bg-green-50" : "border-gray-300 hover:border-green-400",
                     images.length >= maxFiles && "opacity-50 cursor-not-allowed"
                 )}
@@ -95,9 +100,9 @@ export function ImageUploader({ images, onChange, maxFiles = 5 }: ImageUploaderP
             {images.length > 0 && (
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     {images.map((file, index) => (
-                        <div key={index} className="relative aspect-square rounded-md overflow-hidden border border-gray-200 group">
+                        <div key={index} className="relative aspect-square rounded-md overflow-hidden border border-gray-200 group bg-gray-50">
                             <Image
-                                src={URL.createObjectURL(file)}
+                                src={getPreviewUrl(file)}
                                 alt={`Preview ${index}`}
                                 fill
                                 className="object-cover"
@@ -105,9 +110,9 @@ export function ImageUploader({ images, onChange, maxFiles = 5 }: ImageUploaderP
                             <button
                                 type="button"
                                 onClick={() => removeImage(index)}
-                                className="absolute top-1 right-1 bg-white/80 hover:bg-red-500 hover:text-white rounded-full p-1 transition-colors"
+                                className="absolute top-1 right-1 bg-white/90 hover:bg-red-500 hover:text-white rounded-full p-1.5 transition-colors shadow-sm"
                             >
-                                <X size={16} />
+                                <X size={14} />
                             </button>
                         </div>
                     ))}
