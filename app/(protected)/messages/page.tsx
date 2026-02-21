@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, Suspense } from 'react'
 import { Search, Send, MoreVertical, Phone, Image as ImageIcon, Loader2 } from 'lucide-react'
 import Image from 'next/image'
 import { createClient } from '@/utils/supabase/client'
@@ -44,7 +44,7 @@ type Message = {
     is_read: boolean
 }
 
-export default function MessagesPage() {
+function MessagesContent() {
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [selectedChatId, setSelectedChatId] = useState<string | null>(null)
     const [messages, setMessages] = useState<Message[]>([])
@@ -447,5 +447,13 @@ export default function MessagesPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+export default function MessagesPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center h-screen items-center"><Loader2 className="animate-spin text-green-600" /></div>}>
+            <MessagesContent />
+        </Suspense>
     )
 }

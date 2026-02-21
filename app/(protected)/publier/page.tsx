@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { CATEGORIES, PLANS, PROVINCES } from '@/lib/constants'
 import { Button } from '@/components/ui/button'
 import { ImageUploader } from '@/components/ui/image-uploader'
@@ -9,7 +9,7 @@ import { Check, ChevronRight, CheckCircle, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/utils/supabase/client'
 
-export default function PublishPage() {
+function PublishContent() {
     const [step, setStep] = useState(1)
     const [loading, setLoading] = useState(false)
     const [fetchingAd, setFetchingAd] = useState(false)
@@ -614,5 +614,13 @@ export default function PublishPage() {
                 }
             `}</style>
         </div>
+    )
+}
+
+export default function PublishPage() {
+    return (
+        <Suspense fallback={<div className="flex justify-center h-screen items-center"><Loader2 className="animate-spin text-green-600" /></div>}>
+            <PublishContent />
+        </Suspense>
     )
 }
