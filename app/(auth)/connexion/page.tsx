@@ -41,8 +41,8 @@ export default function LoginPage() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-center text-gray-900 mb-2">Bon retour !</h1>
-            <p className="text-center text-gray-500 mb-8">Connectez-vous pour gérer vos annonces</p>
+            <h1 className="text-center font-serif text-3xl font-bold tracking-tight text-[#142230]">Bon retour</h1>
+            <p className="mb-8 mt-2 text-center text-sm leading-6 text-[#687582]">Connectez-vous pour gérer vos annonces et suivre vos ventes.</p>
 
             {error && (
                 <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm mb-6 border border-red-100">
@@ -59,7 +59,7 @@ export default function LoginPage() {
                             id="email"
                             type="email"
                             required
-                            className="w-full h-10 pl-10 pr-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                            className="h-12 w-full rounded-xl border border-[#ded9d0] bg-[#fffdf9] pl-10 pr-3 text-sm outline-none transition-all placeholder:text-[#a4aaa9] focus:border-[#f26b4f] focus:ring-4 focus:ring-[#f26b4f]/10"
                             placeholder="votre@email.com"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -70,7 +70,7 @@ export default function LoginPage() {
                 <div className="space-y-2">
                     <div className="flex justify-between">
                         <label className="text-sm font-medium text-gray-700" htmlFor="password">Mot de passe</label>
-                        <Link href="/mot-de-passe-oublie" className="text-sm text-green-600 hover:underline">
+                        <Link href="/mot-de-passe-oublie" className="text-sm font-medium text-[#d6533c] hover:underline">
                             Oublié ?
                         </Link>
                     </div>
@@ -80,7 +80,7 @@ export default function LoginPage() {
                             id="password"
                             type="password"
                             required
-                            className="w-full h-10 pl-10 pr-3 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all"
+                            className="h-12 w-full rounded-xl border border-[#ded9d0] bg-[#fffdf9] pl-10 pr-3 text-sm outline-none transition-all placeholder:text-[#a4aaa9] focus:border-[#f26b4f] focus:ring-4 focus:ring-[#f26b4f]/10"
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
@@ -88,7 +88,7 @@ export default function LoginPage() {
                     </div>
                 </div>
 
-                <Button type="submit" className="w-full bg-green-600 hover:bg-green-700" disabled={loading}>
+                <Button type="submit" className="h-12 w-full rounded-xl bg-[#f26b4f] font-semibold text-[#fffaf4] shadow-[0_10px_24px_rgba(242,107,79,0.24)] hover:bg-[#db5840]" disabled={loading}>
                     {loading ? (
                         <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -102,7 +102,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center text-sm text-gray-600">
                 Pas encore de compte ?{' '}
-                <Link href="/inscription" className="text-green-600 font-medium hover:underline">
+                <Link href="/inscription" className="font-medium text-[#d6533c] hover:underline">
                     Créer un compte
                 </Link>
             </div>
