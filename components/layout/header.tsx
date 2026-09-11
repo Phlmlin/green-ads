@@ -83,9 +83,10 @@ export function Header() {
 
                     {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center gap-4">
-                        <Link href="/recherche" className="text-gray-600 hover:text-green-600 font-medium">
-                            Annonces
-                        </Link>
+                        <div className="flex items-center gap-4">
+                            <Link href="/recherche" className="text-gray-600 hover:text-[#d6533c] font-medium">Annonces</Link>
+                            <Link href="/marketplace" className="text-gray-600 hover:text-[#d6533c] font-medium">Marketplace</Link>
+                        </div>
                         <Button asChild className="gap-2 bg-orange-500 hover:bg-orange-600 text-white border-none">
                             <Link href="/publier">
                                 <PlusCircle size={18} />
