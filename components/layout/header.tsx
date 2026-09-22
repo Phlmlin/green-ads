@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, Menu, X, User, PlusCircle, LogOut, Settings, LayoutDashboard, ChevronDown } from 'lucide-react'
+import { Search, Menu, X, User, PlusCircle, LogOut, Settings, LayoutDashboard, ChevronDown, ShieldCheck } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/utils/supabase/client'
@@ -222,6 +222,10 @@ export function Header() {
                                 <Link href="/tableau-de-bord" className="flex items-center gap-3 text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
                                     <LayoutDashboard size={18} />
                                     Tableau de bord
+                                </Link>
+                                <Link href="/admin" className="flex items-center gap-3 text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
+                                    <ShieldCheck size={18} />
+                                    Administration
                                 </Link>
                                 <Link href="/parametres" className="flex items-center gap-3 text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
                                     <Settings size={18} />
