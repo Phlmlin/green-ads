@@ -1,0 +1,8 @@
+import Link from 'next/link'
+import { Heart, MapPin, ArrowRight } from 'lucide-react'
+
+const favorites = [{ title: 'Appartement meublé au centre', seller: 'Maison Ébène', location: 'Libreville · Louis', price: '45 000 F CFA / nuit' }, { title: 'Photographe événementiel', seller: 'Kévin M.', location: 'Port-Gentil', price: 'À partir de 80 000 F CFA' }]
+
+export default function FavoritesPage() {
+  return <div className="mx-auto max-w-6xl"><div><p className="text-xs font-semibold uppercase tracking-[0.24em] text-[#d6533c]">À retrouver</p><h1 className="mt-3 font-serif text-5xl font-bold tracking-tight text-[#142230]">Mes favoris</h1><p className="mt-3 text-[#687582]">Les services et professionnels que vous souhaitez garder sous la main.</p></div><div className="mt-10 grid gap-5 md:grid-cols-2">{favorites.map((favorite) => <article key={favorite.title} className="rounded-[1.5rem] border border-[#e4e0d8] bg-[#fffdf9] p-6 shadow-[0_12px_35px_rgba(20,34,48,0.05)]"><div className="flex items-start justify-between gap-4"><div><h2 className="font-serif text-2xl font-bold text-[#142230]">{favorite.title}</h2><p className="mt-2 text-sm text-[#687582]">par {favorite.seller}</p></div><Heart className="fill-[#f26b4f] text-[#f26b4f]" /></div><div className="mt-6 flex items-center justify-between border-t border-[#eeeae2] pt-4"><div><p className="flex items-center gap-2 text-sm text-[#687582]"><MapPin size={15} />{favorite.location}</p><p className="mt-2 text-sm font-semibold text-[#142230]">{favorite.price}</p></div><Link href="/marketplace" className="flex items-center gap-2 text-sm font-semibold text-[#d6533c]">Voir <ArrowRight size={16} /></Link></div></article>)}</div></div>
+}

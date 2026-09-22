@@ -86,6 +86,7 @@ export function Header() {
                         <div className="flex items-center gap-4">
                             <Link href="/recherche" className="text-gray-600 hover:text-[#d6533c] font-medium">Annonces</Link>
                             <Link href="/marketplace" className="text-gray-600 hover:text-[#d6533c] font-medium">Marketplace</Link>
+                            <Link href="/aide" className="text-gray-600 hover:text-[#d6533c] font-medium">Aide</Link>
                         </div>
                         <Button asChild className="gap-2 bg-orange-500 hover:bg-orange-600 text-white border-none">
                             <Link href="/publier">
@@ -210,9 +211,11 @@ export function Header() {
                         <Link href="/recherche" className="text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
                             Annonces
                         </Link>
-                        <Link href="/categories" className="text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
-                            Catégories
-                        </Link>
+<Link href="/categories" className="text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>
+  Catégories
+  </Link>
+  <Link href="/marketplace" className="text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>Marketplace</Link>
+  <Link href="/aide" className="text-gray-600 py-2" onClick={() => setIsMenuOpen(false)}>Aide</Link>
                         <div className="h-px bg-gray-100 my-2" />
                         {isAuthenticated ? (
                             <>
