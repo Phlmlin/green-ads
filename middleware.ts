@@ -63,7 +63,12 @@ export async function middleware(request: NextRequest) {
     if (request.nextUrl.pathname.startsWith('/tableau-de-bord') ||
         request.nextUrl.pathname.startsWith('/publier') ||
         request.nextUrl.pathname.startsWith('/messages') ||
-        request.nextUrl.pathname.startsWith('/parametres')) {
+        request.nextUrl.pathname.startsWith('/parametres') ||
+        request.nextUrl.pathname.startsWith('/reservations') ||
+        request.nextUrl.pathname.startsWith('/paiements') ||
+        request.nextUrl.pathname.startsWith('/commandes') ||
+        request.nextUrl.pathname.startsWith('/favoris') ||
+        request.nextUrl.pathname.startsWith('/avis')) {
 
         if (!user) {
             return NextResponse.redirect(new URL('/connexion', request.url))
@@ -75,7 +80,15 @@ export async function middleware(request: NextRequest) {
         if (!user) {
             return NextResponse.redirect(new URL('/connexion', request.url))
         }
-        // TODO: Add role check here later
+        const { data: profile } = await supabase
+            .from('users')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle()
+
+        if (profile?.role !== 'admin') {
+            return NextResponse.redirect(new URL('/tableau-de-bord', request.url))
+        }
     }
 
     return response
