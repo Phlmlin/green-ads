@@ -123,8 +123,8 @@ export default function PublishPage() {
             const imageUrls = []
             if (formData.images.length > 0) {
                 for (const file of formData.images) {
-                    const fileExt = file.name.split('.').pop()
-                    const fileName = `${Math.random()}.${fileExt}`
+                    const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg'
+                    const fileName = `${crypto.randomUUID()}.${fileExt}`
                     const { error: uploadError } = await supabase.storage
                         .from('ads')
                         .upload(`${user.id}/${fileName}`, file)

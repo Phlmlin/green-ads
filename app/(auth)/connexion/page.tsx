@@ -33,7 +33,14 @@ export default function LoginPage() {
             router.push('/tableau-de-bord')
             router.refresh()
         } catch (err: any) {
-            setError(err.message || 'Une erreur est survenue lors de la connexion')
+            const message = err?.message?.toLowerCase?.() ?? ''
+            setError(
+                message.includes('email not confirmed')
+                    ? 'Veuillez confirmer votre adresse email avant de vous connecter.'
+                    : message.includes('rate limit')
+                        ? 'Trop de tentatives. Réessayez dans quelques instants.'
+                        : 'Email ou mot de passe incorrect.'
+            )
         } finally {
             setLoading(false)
         }
